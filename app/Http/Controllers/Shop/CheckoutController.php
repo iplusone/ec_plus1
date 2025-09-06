@@ -22,88 +22,54 @@ class CheckoutController extends Controller
         return view('shop.checkout.form', compact('cart','items','total'));
     }
 
+// 冒頭 use に PaymentFactory は不要（支払いは PaymentController で開始）
     public function store(Request $r) {
         $m = app('merchant');
 
         $data = $r->validate([
-            'email'  => ['required','email'],
-            'name'   => ['nullable','string','max:100'],
-            'postal' => ['nullable','string','max:16'],
-            'pref'   => ['nullable','string','max:32'],
-            'city'   => ['nullable','string','max:64'],
-            'line1'  => ['nullable','string','max:128'],
-            'line2'  => ['nullable','string','max:128'],
-            'tel'    => ['nullable','string','max:32'],
-            'create_account' => ['sometimes','boolean'],
-            'password' => ['nullable','string','min:8'],
+            'email'=>['required','email'], 'name'=>['nullable','string','max:100'],
+            'postal'=>['nullable','string','max:16'], 'pref'=>['nullable','string','max:32'],
+            'city'=>['nullable','string','max:64'], 'line1'=>['nullable','string','max:128'],
+            'line2'=>['nullable','string','max:128'], 'tel'=>['nullable','string','max:32'],
+            'create_account'=>['sometimes','boolean'], 'password'=>['nullable','string','min:8'],
         ]);
 
-        $cart = Cart::with('items.variant.product')->where('id',session()->getId())->lockForUpdate()->firstOrFail();
+        $cart = \App\Models\Cart::with('items.variant.product')->where('id',session()->getId())->firstOrFail();
         abort_unless($cart->merchant_id === $m->id, 400);
-        $items = $cart->items;
-        abort_if($items->isEmpty(), 400, 'カートが空です');
+        $items = $cart->items; abort_if($items->isEmpty(), 400, 'カートが空です');
 
-        return DB::transaction(function () use ($m,$data,$cart,$items) {
-
-            // 顧客の確定（既存 or 新規）
-            $customer = Customer::where('email',$data['email'])->first();
-            if (!$customer && ($data['create_account'] ?? false) && !empty($data['password'])) {
-                $customer = Customer::create([
-                    'email'=>$data['email'],
-                    'name'=>$data['name'] ?? null,
-                    'password'=>Hash::make($data['password']),
-                ]);
-            }
-
-            // 在庫引当（variants.stock を減算）— 競合対策
-            foreach ($items as $ci) {
-                $aff = DB::table('product_variants')
-                    ->where('id',$ci->product_variant_id)
-                    ->where('stock','>=',$ci->qty)
-                    ->decrement('stock', $ci->qty);
-                if ($aff === 0) abort(409, "在庫不足: {$ci->variant->sku}");
-            }
-
-            $number = strtoupper(Str::random(10));
-            $order = Order::create([
-                'number'=>$number,
-                'merchant_id'=>$m->id,
-                'customer_id'=>$customer?->id,
-                'email'=>$data['email'],
-                'status'=>'paid',         // 決済連携前は 'pending' にしてもOK
-                'amount_total'=>$items->sum(fn($i)=> $i->qty * $i->price_amount),
-                'ship_to'=>json_encode([
-                    'name'=>$data['name'] ?? null,
-                    'postal'=>$data['postal'] ?? null,
-                    'pref'=>$data['pref'] ?? null,
-                    'city'=>$data['city'] ?? null,
-                    'line1'=>$data['line1'] ?? null,
-                    'line2'=>$data['line2'] ?? null,
-                    'tel'=>$data['tel'] ?? null,
-                ], JSON_UNESCAPED_UNICODE),
+        // 顧客（任意）
+        $customer = \App\Models\Customer::where('email',$data['email'])->first();
+        if (!$customer && ($data['create_account'] ?? false) && !empty($data['password'])) {
+            $customer = \App\Models\Customer::create([
+                'email'=>$data['email'],'name'=>$data['name'] ?? null,
+                'password'=>\Illuminate\Support\Facades\Hash::make($data['password']),
             ]);
+        }
 
-            foreach ($items as $ci) {
-                OrderItem::create([
-                    'order_id'=>$order->id,
-                    'product_id'=>$ci->product_id,
-                    'product_variant_id'=>$ci->product_variant_id,
-                    'sku'=>$ci->variant->sku,
-                    'name'=>$ci->variant->product->name,
-                    'price_amount'=>$ci->price_amount,
-                    'qty'=>$ci->qty,
-                    'subtotal'=>$ci->qty * $ci->price_amount,
-                ]);
-            }
+        // まだ在庫は減らさない。未確定注文（status=pending）
+        $number = strtoupper(\Illuminate\Support\Str::random(10));
+        $order = \App\Models\Order::create([
+            'number'=>$number, 'merchant_id'=>$m->id, 'customer_id'=>$customer?->id,
+            'email'=>$data['email'], 'status'=>'pending', 'currency'=>'JPY',
+            'amount_total'=>$items->sum(fn($i)=> $i->qty * $i->price_amount),
+            'ship_to'=>json_encode([
+                'name'=>$data['name'] ?? null, 'postal'=>$data['postal'] ?? null,
+                'pref'=>$data['pref'] ?? null, 'city'=>$data['city'] ?? null,
+                'line1'=>$data['line1'] ?? null, 'line2'=>$data['line2'] ?? null, 'tel'=>$data['tel'] ?? null,
+            ], JSON_UNESCAPED_UNICODE),
+        ]);
 
-            // カートを空に
-            $cart->items()->delete();
+        foreach ($items as $ci) {
+            \App\Models\OrderItem::create([
+                'order_id'=>$order->id, 'product_id'=>$ci->product_id, 'product_variant_id'=>$ci->product_variant_id,
+                'sku'=>$ci->variant->sku, 'name'=>$ci->variant->product->name,
+                'price_amount'=>$ci->price_amount, 'qty'=>$ci->qty, 'subtotal'=>$ci->qty * $ci->price_amount,
+            ]);
+        }
 
-            // メール通知（Mailpit）
-            Mail::to($order->email)->send(new OrderPlaced($order));
-
-            return redirect()->route('orders.thankyou', ['merchant'=>$m->slug,'number'=>$order->number]);
-        });
+        // 支払いへ（PaymentController@pay が決済セッションを作る）
+        return redirect()->route('checkout.pay', ['merchant'=>$m->slug])->with('order_number', $order->number);
     }
 
     public function thankyou(string $merchant, string $number) {
