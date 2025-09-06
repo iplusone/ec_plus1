@@ -1,9 +1,8 @@
 @extends('layouts.app')
-@section('title','ご注文ありがとうございます')
+@section('title','ご注文完了')
 @section('content')
-<div class="text-center py-5">
-  <h1>ご注文ありがとうございます</h1>
-  <p class="mt-3">注文番号：<strong>{{ $number }}</strong></p>
-  <a class="btn btn-outline-primary mt-3" href="{{ route('shop.index') }}">トップへ戻る</a>
-</div>
+<h1 class="h4">ご注文ありがとうございます</h1>
+<p>注文番号：<strong>{{ $order->number }}</strong></p>
+<p>合計：¥{{ number_format($order->amount_total) }}</p>
+<a class="btn btn-primary" href="{{ route('shop.index', $currentMerchant->slug) }}">トップへ戻る</a>
 @endsection

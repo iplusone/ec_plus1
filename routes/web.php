@@ -157,3 +157,11 @@ Route::get('/', function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/health', fn() => response()->json(['ok' => true, 'ts' => now()->toIso8601String()]))->name('health');
+
+
+// Seller: 画像アップロード対応（1枚サムネ＋複数画像）
+Route::post('products/{product}/thumbnail', [\App\Http\Controllers\Seller\ProductMediaController::class,'uploadThumbnail'])
+  ->name('products.thumbnail.upload');
+Route::post('products/{product}/images', [\App\Http\Controllers\Seller\ProductMediaController::class,'uploadImages'])
+  ->name('products.images.upload');
+
