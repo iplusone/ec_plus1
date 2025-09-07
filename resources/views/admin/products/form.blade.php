@@ -59,7 +59,7 @@
 <h3 class="h6">画像</h3>
 
 <div class="mb-2">
-  <form method="post" action="{{ route('seller.products.thumbnail.upload', [$currentMerchant ?? $currentMerchant ?? app('merchant'), $product]) }}" enctype="multipart/form-data">
+  <form method="post" action="{{ route('merchant.products.thumbnail.upload', [$currentMerchant ?? $currentMerchant ?? app('merchant'), $product]) }}" enctype="multipart/form-data">
     @csrf
     <div class="d-flex align-items-center gap-2">
       <input type="file" name="file" accept="image/*" class="form-control" required>
@@ -72,7 +72,7 @@
 </div>
 
 <div class="mb-2">
-  <form method="post" action="{{ route('seller.products.images.upload', [$currentMerchant ?? app('merchant'), $product]) }}" enctype="multipart/form-data">
+  <form method="post" action="{{ route('merchant.products.images.upload', [$currentMerchant ?? app('merchant'), $product]) }}" enctype="multipart/form-data">
     @csrf
     <input type="file" name="files[]" multiple accept="image/*" class="form-control" required>
     <button class="btn btn-outline-primary btn-sm mt-2">画像を追加</button>

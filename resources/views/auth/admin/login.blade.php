@@ -1,16 +1,17 @@
-@extends('layouts.app')
-@section('title','Adminログイン')
+@extends('layouts.guest')
+@section('title','Admin Login')
 @section('content')
-<h1 class="h4 mb-3">Admin ログイン</h1>
-<form method="post" action="{{ route('admin.login') }}" class="vstack gap-3" style="max-width:420px">
-  @csrf
-  <input name="email" type="email" class="form-control" placeholder="Email" value="{{ old('email') }}" required>
-  <input name="password" type="password" class="form-control" placeholder="Password" required>
-  @error('email')<div class="text-danger small">{{ $message }}</div>@enderror
-  <div class="form-check">
-    <input class="form-check-input" type="checkbox" name="remember" id="remember">
-    <label class="form-check-label" for="remember">ログイン状態を保持</label>
-  </div>
-  <button class="btn btn-primary">ログイン</button>
-</form>
+<div class="container" style="max-width:420px">
+  <h1 class="h4 mb-3">Adminログイン</h1>
+  @if($errors->any())<div class="alert alert-danger">メールまたはパスワードが違います。</div>@endif
+  <form method="post" action="{{ route('admin.login') }}" class="vstack gap-2">
+    @csrf
+    <input name="email" type="email" class="form-control" placeholder="Email" value="{{ old('email','admin@example.com') }}" required>
+    <input name="password" type="password" class="form-control" placeholder="Password" value="password" required>
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" name="remember" id="rm"><label class="form-check-label" for="rm">ログイン状態を保持</label>
+    </div>
+    <button class="btn btn-primary w-100">ログイン</button>
+  </form>
+</div>
 @endsection

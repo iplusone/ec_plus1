@@ -20,6 +20,19 @@
   <div class="col-md-6"><label class="form-label">住所2</label><input name="line2" class="form-control" value="{{ old('line2') }}"></div>
   <div class="col-md-4"><label class="form-label">電話</label><input name="tel" class="form-control" value="{{ old('tel') }}"></div>
 
+@php
+  $methods = \App\Services\Pricing\ShippingCalculator::listActive();
+@endphp
+
+<div class="col-12">
+  <label class="form-label">配送方法</label>
+  <select name="shipping_method" class="form-select">
+    @foreach($methods as $m)
+      <option value="{{ $m['code'] }}">{{ $m['name'] }}（送料 ¥{{ number_format($m['base_fee']) }} / ¥{{ number_format($m['free_threshold'] ?? 0) }} 以上で無料）</option>
+    @endforeach
+  </select>
+</div>
+
   <div class="col-12 form-check mt-2">
     <input class="form-check-input" type="checkbox" name="create_account" id="ca" value="1">
     <label class="form-check-label" for="ca">アカウントを作成する</label>

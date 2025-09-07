@@ -11,7 +11,10 @@ class User extends Authenticatable
     protected $hidden = ['password','remember_token'];
 
     public function isAdmin(): bool  { return $this->role === 'admin'; }
-    public function isSeller(): bool { return $this->role === 'seller'; }
+    public function isMerchant(): bool { return $this->role === 'merchant'; }
 
-    public function merchants(){ return $this->belongsToMany(Merchant::class); }
+    public function merchant()
+    {
+        return $this->belongsTo(\App\Models\Merchant::class, 'merchant_id', 'id');
+    }
 }

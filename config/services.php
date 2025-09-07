@@ -34,5 +34,16 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'stripe' => [
+        'secret'  => env('STRIPE_SECRET'),
+        'public'  => env('STRIPE_PUBLIC'),
+        'webhook' => env('STRIPE_WEBHOOK_SECRET'),
+    ],
+    'payjp' => [
+        'secret'  => env('PAYJP_SECRET'),
+        'public'  => env('PAYJP_PUBLIC'),
+        'webhook' => env('PAYJP_WEBHOOK_SECRET'),
+    ],
+
 
 ];

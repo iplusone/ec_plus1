@@ -1,5 +1,5 @@
 <?php
-namespace App\Http\Controllers\Seller;
+namespace App\Http\Controllers\Merchant;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
@@ -24,4 +24,24 @@ class ProductMediaController extends Controller
         }
         return back()->with('ok','画像を追加しました');
     }
+
+
+    public function destroyImage(Request $r, Product $product, ProductImage $image)
+    {
+        abort_unless($image->product_id === $product->id, 403);
+        if ($image->path) \Storage::disk('public')->delete($image->path);
+        $image->delete();
+        return back()->with('ok','画像を削除しました');
+    }
+
+    public function destroyThumbnail(Request $r, Product $product)
+    {
+        if ($product->thumbnail_path) {
+            \Storage::disk('public')->delete($product->thumbnail_path);
+            $product->update(['thumbnail_path'=>null]);
+        }
+        return back()->with('ok','サムネイルを削除しました');
+    }
+
+
 }

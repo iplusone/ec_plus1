@@ -14,7 +14,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'invalid'),  // デフォルトで勝手にさせない
+        'guard' => 'web', // 安全
         'passwords' => env('AUTH_PASSWORD_BROKER', 'users'),
     ],
 
@@ -36,25 +36,19 @@ return [
     */
 
     'guards' => [
-        'web' => [ // デフォルト: customer にしてもOK
+        'web' => [                   // Customer（users.role = 'customer'）
             'driver' => 'session',
-            'provider' => 'customers',
+            'provider' => 'users',
+        ],
+        'merchant' => [              // Merchant（users.role = 'merchant'）
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+        'admin' => [                 // Admin（users.role = 'admin'）
+            'driver' => 'session',
+            'provider' => 'admins',
         ],
 
-        'admin' => [
-            'driver' => 'session',
-            'provider' => 'users',   // usersテーブル（role=admin）
-        ],
-
-        'seller' => [
-            'driver' => 'session',
-            'provider' => 'users',   // usersテーブル（role=seller）
-        ],
-
-        'customer' => [
-            'driver' => 'session',
-            'provider' => 'customers', // customersテーブル
-        ],
     ],
 
     /*
@@ -77,11 +71,11 @@ return [
     'providers' => [
         'users' => [
             'driver' => 'eloquent',
-            'model' => App\Models\User::class, // 管理者・販売者
+            'model' => App\Models\User::class, // 販売者、購入者
         ],
-        'customers' => [
+        'admins' => [
             'driver' => 'eloquent',
-            'model' => App\Models\Customer::class, // 購入者
+            'model'  => App\Models\Admin::class, // Admin
         ],
     ],
 
@@ -107,12 +101,6 @@ return [
     'passwords' => [
         'users' => [
             'provider' => 'users',
-            'table' => 'password_reset_tokens',
-            'expire' => 60,
-            'throttle' => 60,
-        ],
-        'customers' => [
-            'provider' => 'customers',
             'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,

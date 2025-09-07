@@ -30,8 +30,11 @@ return new class extends Migration {
         // 顧客
         Schema::create('customers', function (Blueprint $t) {
             $t->id();
-            $t->string('email')->unique();
             $t->string('name')->nullable();
+            $t->string('email')->unique();
+            $t->timestamp('email_verified_at')->nullable();
+            $t->string('password');
+            $t->rememberToken();
             $t->timestamps();
         });
 
